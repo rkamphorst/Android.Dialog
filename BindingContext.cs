@@ -13,16 +13,20 @@ namespace Android.Dialog
         public RootElement Root;
         Dictionary<Element, MemberAndInstance> mappings;
 
-        class MemberAndInstance
-        {
-            public MemberAndInstance(MemberInfo mi, object o)
-            {
-                Member = mi;
-                Obj = o;
-            }
-            public MemberInfo Member;
-            public object Obj;
-        }
+		class MemberAndInstance {
+			public MemberAndInstance (MemberInfo mi, object o, CustomElementAttribute customInfo, Type memberType)
+			{
+				Member = mi;
+				Obj = o;
+				CustomInfo = customInfo;
+				MemberType = memberType;
+			}
+			
+			public MemberInfo Member;
+			public object Obj;
+			public CustomElementAttribute CustomInfo;
+			public Type MemberType;
+		}
 
         static object GetValue(MemberInfo mi, object o)
         {
@@ -107,6 +111,7 @@ namespace Android.Dialog
             foreach (var mi in members)
             {
                 Type mType = GetTypeForMember(mi);
+				CustomElementAttribute customElementAttr = null;
 
                 if (mType == null)
                     continue;
@@ -126,7 +131,9 @@ namespace Android.Dialog
                             root.Add(section);
                         var sa = attr as SectionAttribute;
                         section = new Section(sa.Caption, sa.Footer);
-                    }
+					} else if (attr is CustomElementAttribute){
+						customElementAttr = attr as CustomElementAttribute;
+					}
                 }
                 if (skip)
                     continue;
@@ -138,7 +145,11 @@ namespace Android.Dialog
                     section = new Section();
 
                 Element element = null;
-                if (mType == typeof(string))
+				if (customElementAttr != null) 
+				{
+					element = customElementAttr.CreateElement(caption, mi, mType, GetValue(mi, o), attrs);
+				} 
+				else if (mType == typeof(string))
                 {
                     PasswordAttribute pa = null;
                     AlignmentAttribute align = null;
@@ -319,7 +330,7 @@ namespace Android.Dialog
                     continue;
 
                 section.Add(element);
-                mappings[element] = new MemberAndInstance(mi, o);
+                mappings[element] = new MemberAndInstance(mi, o, customElementAttr, mType);
             }
             root.Add(section);
         }
@@ -356,11 +367,15 @@ namespace Android.Dialog
         {
             foreach (var dk in mappings)
             {
-                Element element = dk.Key;
-                MemberInfo mi = dk.Value.Member;
-                object obj = dk.Value.Obj;
+				CustomElementAttribute customInfo = dk.Value.CustomInfo;
+				Type memberType = dk.Value.MemberType;
+				Element element = dk.Key;
+				MemberInfo mi = dk.Value.Member;
+				object obj = dk.Value.Obj;
 
-                if (element is DateTimeElement)
+				if (customInfo != null) 
+					SetValue (mi, obj, customInfo.GetValue(element, memberType)); 
+                else if (element is DateTimeElement)
                     SetValue(mi, obj, ((DateTimeElement)element).DateValue);
                 else if (element is FloatElement)
                     SetValue(mi, obj, ((FloatElement)element).Value);
