@@ -1,5 +1,7 @@
 using System;
 using System.Reflection;
+using System.Dynamic.Utils;
+using System.Linq;
 
 namespace Android.Dialog
 {
@@ -139,6 +141,48 @@ namespace Android.Dialog
             High = high;
         }
     }
+
+	/**
+	 * The IndexTagsAttribute class, and all references to it throughout this file,
+	 * were added by Reinder Kamphorst 2012-12-06.
+	 */
+	
+	/// <summary>
+	/// Index tags attribute. Use this attribute to insert the generated 
+	/// element into the <seealso cref="BindingContext"/> element index
+	/// with given tag. 
+	/// </summary>
+	/// <remarks>
+	/// <para>Usage:</para>
+	/// 
+	/// <para>In the reflection API, put the following attribute on a field 
+	/// or property member:</para>
+	/// 
+	/// <code>[IndexTags("tag1,tag2")]</code>
+	/// 
+	/// <para>This inserts the generated element into the element index under 
+	/// tags "tag1" and "tag2". If ctx is the binding context, a list 
+	/// of elements for one particular tag ("tag1") can be fetched as 
+	/// follows:</para>
+	/// 
+	/// <code>List<Element> elementsForTag1 = ctx.GetElementsForTag("tag1");</code>
+	/// 
+	/// </remarks>			
+	[AttributeUsage (AttributeTargets.Field | AttributeTargets.Property, Inherited=false)]
+	public class IndexTagsAttribute : Attribute {
+		
+		public IndexTagsAttribute(string tags) {
+			CsvTags = tags;
+		}
+		
+		public string CsvTags;
+		
+		public string[] TagList {
+			get {
+				return CsvTags.Split(',').Select(str => str.Trim().ToLower()).ToArray();
+			}
+		}
+	}
 
 	/**
 	 * The CustomElementAttribute class, and all references to it throughout this file

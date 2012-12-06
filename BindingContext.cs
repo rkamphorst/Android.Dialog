@@ -12,6 +12,7 @@ namespace Android.Dialog
     {
         public RootElement Root;
         Dictionary<Element, MemberAndInstance> mappings;
+		Dictionary<string, List<Element>> index;
 
 		class MemberAndInstance {
 			public MemberAndInstance (MemberInfo mi, object o, CustomElementAttribute customInfo, Type memberType)
@@ -95,6 +96,7 @@ namespace Android.Dialog
                 throw new ArgumentNullException("o");
 
             mappings = new Dictionary<Element, MemberAndInstance>();
+			index = new Dictionary<string, List<Element>>();
 
             Root = new RootElement(title);
             Populate(callbacks, o, Root);
@@ -116,9 +118,12 @@ namespace Android.Dialog
                 if (mType == null)
                     continue;
 
+				string[] indexTags = new string[0];
                 string caption = null;
                 object[] attrs = mi.GetCustomAttributes(false);
                 bool skip = false;
+
+
                 foreach (var attr in attrs)
                 {
                     if (attr is SkipAttribute)
@@ -131,6 +136,8 @@ namespace Android.Dialog
                             root.Add(section);
                         var sa = attr as SectionAttribute;
                         section = new Section(sa.Caption, sa.Footer);
+					} else if (attr is IndexTagsAttribute) {
+						indexTags = ((IndexTagsAttribute) attr).TagList;
 					} else if (attr is CustomElementAttribute){
 						customElementAttr = attr as CustomElementAttribute;
 					}
@@ -331,6 +338,12 @@ namespace Android.Dialog
 
                 section.Add(element);
                 mappings[element] = new MemberAndInstance(mi, o, customElementAttr, mType);
+
+				foreach (var tag in indexTags) {
+					if (!index.ContainsKey(tag))
+						index[tag] = new List<Element>();
+					index[tag].Add(element);
+				}
             }
             root.Add(section);
         }
@@ -409,5 +422,9 @@ namespace Android.Dialog
                 }
             }
         }
-    }
+
+		public List<Element> GetElementsForTag(string tag) {
+			return index.ContainsKey(tag) ? new List<Element>(index[tag]) : new List<Element>();
+		}
+	}
 }
