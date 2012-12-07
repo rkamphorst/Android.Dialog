@@ -179,7 +179,7 @@ namespace Android.Dialog
 		
 		public string[] TagList {
 			get {
-				return CsvTags.Split(',').Select(str => str.Trim().ToLower()).ToArray();
+				return CsvTags.Split(',').Select(str => str.Trim().ToLowerInvariant()).ToArray();
 			}
 		}
 	}

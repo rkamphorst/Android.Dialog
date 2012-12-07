@@ -424,6 +424,7 @@ namespace Android.Dialog
         }
 
 		public List<Element> GetElementsForTag(string tag) {
+			tag = tag.ToLowerInvariant();
 			return index.ContainsKey(tag) ? new List<Element>(index[tag]) : new List<Element>();
 		}
 	}
